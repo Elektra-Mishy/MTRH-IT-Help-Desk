@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+{% load static %}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}MTRH IT Help Desk{% endblock %}</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <div class="sidebar-logo">
+  <img src="{% static 'img/mtrh_logo.png' %}" alt="MTRH Logo"
+       style="width:42px;height:42px;flex-shrink:0;border-radius:8px;object-fit:contain;background:#fff;padding:2px">
+  <div>
+    <div class="logo-title">MTRH Help Desk</div>
+    <div class="logo-sub">Moi Teaching & Referral Hospital</div>
+  </div>
+</div>
+
+    <nav class="sidebar-nav">
+
+      <a href="{% url 'dashboard' %}"
+         class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        <i class="ti ti-layout-dashboard"></i> Dashboard
+      </a>
+
+      <div class="nav-group">Tickets</div>
+
+      <a href="{% url 'ticket_create' %}"
+         class="nav-item {% if request.resolver_match.url_name == 'ticket_create' %}active{% endif %}">
+        <i class="ti ti-plus"></i> Create Ticket
+      </a>
+
+      <a href="{% url 'ticket_list' %}"
+         class="nav-item {% if request.resolver_match.url_name == 'ticket_list' %}active{% endif %}">
+        <i class="ti ti-list"></i> All Tickets
+      </a>
+
+      <a href="{% url 'my_tickets' %}"
+         class="nav-item {% if request.resolver_match.url_name == 'my_tickets' %}active{% endif %}">
+        <i class="ti ti-ticket"></i> My Tickets
+      </a>
+
+      {% if request.user.role == 'admin' %}
+      <div class="nav-group">Manage</div>
+
+      <a href="{% url 'department_list' %}"
+         class="nav-item {% if request.resolver_match.url_name == 'department_list' %}active{% endif %}">
+        <i class="ti ti-building-hospital"></i> Departments
+      </a>
+
+      <a href="{% url 'user_list' %}"
+         class="nav-item {% if request.resolver_match.url_name == 'user_list' %}active{% endif %}">
+        <i class="ti ti-users"></i> Users
+      </a>
+
+      <a href="{% url 'reports' %}"
+         class="nav-item {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
+        <i class="ti ti-chart-bar"></i> Reports
+      </a>
+      {% endif %}
+
+    </nav>
+
+    <div class="sidebar-user">
+      <div class="user-avatar">
+        {{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}
+      </div>
+      <div style="min-width:0;flex:1">
+        <div class="user-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          {{ request.user.get_full_name|default:request.user.username }}
+        </div>
+        <div class="user-role">{{ request.user.get_role_display }}</div>
+      </div>
+      <a href="{% url 'logout' %}" class="logout-btn" title="Logout">
+        <i class="ti ti-logout"></i>
+      </a>
+    </div>
+
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <header class="topbar">
+      <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+      <div class="topbar-actions">
+        {% block topbar_actions %}
+        <a href="{% url 'ticket_create' %}" class="btn btn-primary">
+          <i class="ti ti-plus"></i> New Ticket
+        </a>
+        {% endblock %}
+      </div>
+    </header>
+
+    <div class="content">
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }}">
+            <i class="ti ti-info-circle"></i> {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      {% block content %}{% endblock %}
+
+    </div>
+  </div>
+
+</div>
+
+<script src="{% static 'js/main.js' %}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

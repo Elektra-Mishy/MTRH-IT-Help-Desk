@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block page_title %}Departments{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'department_create' %}" class="btn btn-primary">
+  <i class="ti ti-plus"></i> Add Department
+</a>
+{% endblock %}
+
+{% block content %}
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px">
+  {% for item in dept_data %}
+  <div class="card" style="position:relative">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <div style="width:36px;height:36px;border-radius:10px;background:#E1F5EE;display:flex;align-items:center;justify-content:center">
+        <i class="ti ti-building-hospital" style="color:#0F6E56;font-size:18px"></i>
+      </div>
+      <div style="font-size:13px;font-weight:500">{{ item.dept.department_name }}</div>
+    </div>
+    <div style="font-size:24px;font-weight:500;color:#0F172A;margin-bottom:4px">{{ item.total }}</div>
+    <div style="font-size:11px;color:#64748B;margin-bottom:12px">
+      {{ item.open }} open · {{ item.resolved }} resolved
+    </div>
+    <div style="background:#F1F5F9;border-radius:4px;height:4px;overflow:hidden;margin-bottom:14px">
+      {% if item.total > 0 %}
+      <div style="width:{% widthratio item.resolved item.total 100 %}%;min-width:1%;background:#0F6E56;height:100%;border-radius:4px"></div>
+      {% endif %}
+    </div>
+    <div style="display:flex;gap:6px">
+      <a href="{% url 'department_edit' item.dept.pk %}" class="btn btn-sm">
+        <i class="ti ti-edit"></i> Edit
+      </a>
+      <a href="{% url 'department_delete' item.dept.pk %}"
+         class="btn btn-sm btn-danger"
+         onclick="return confirm('Delete {{ item.dept.department_name }}?')">
+        <i class="ti ti-trash"></i>
+      </a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% block page_title %}{{ ticket.ticket_number }}{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'ticket_list' %}" class="btn"><i class="ti ti-arrow-left"></i> Back to tickets</a>
+{% endblock %}
+
+{% block content %}
+<style>
+.comment-avatar { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:500; color:#fff; flex-shrink:0; margin-top:2px; }
+.comment-avatar-tech { background:#0F6E56; }
+.comment-avatar-user { background:#5B21B6; }
+ .comment-bubble-tech { background:#E1F5EE; border:1px solid #9FE1CB; }
+ .comment-bubble-user { background:#F8FAFC; border:1px solid #F1F5F9; }
+</style>
+<div style="display:grid;grid-template-columns:1fr 260px;gap:16px;align-items:start">
+
+  <!-- LEFT COLUMN -->
+  <div>
+    <!-- Ticket header -->
+    <div style="background:#0F6E56;border-radius:12px;padding:18px 22px;margin-bottom:16px">
+      <div style="font-size:11px;color:rgba(255,255,255,0.6);margin-bottom:4px">
+        {{ ticket.ticket_number }} &nbsp;·&nbsp; {{ ticket.department }} &nbsp;·&nbsp; Submitted by {{ ticket.created_by.get_full_name }}
+      </div>
+      <div style="font-size:16px;font-weight:500;color:#fff;margin-bottom:10px">{{ ticket.title }}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span class="badge badge-{{ ticket.status }}" style="font-size:12px">{{ ticket.get_status_display }}</span>
+        <span class="badge badge-{{ ticket.priority }}" style="font-size:12px">{{ ticket.get_priority_display }} Priority</span>
+        <span style="font-size:11px;color:rgba(255,255,255,0.7);display:flex;align-items:center;gap:4px">
+          <i class="ti ti-calendar"></i> {{ ticket.created_at|date:"d M Y, H:i" }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title"><i class="ti ti-file-text" style="color:#0F6E56"></i> Issue Description</div>
+      <p style="font-size:13px;color:#475569;line-height:1.7">{{ ticket.description }}</p>
+      {% if ticket.attachment %}
+      <div style="margin-top:12px">
+        <a href="{{ ticket.attachment.url }}" target="_blank" class="btn btn-sm">
+          <i class="ti ti-paperclip"></i> View Attachment
+        </a>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Comments -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title"><i class="ti ti-messages" style="color:#0F6E56"></i> Comments ({{ comments.count }})</div>
+
+      {% for comment in comments %}
+      <div style="display:flex;gap:10px;margin-bottom:14px">
+        <div class="comment-avatar {% if comment.user.role == 'technician' %}comment-avatar-tech{% else %}comment-avatar-user{% endif %}">
+          {{ comment.user.first_name|first }}{{ comment.user.last_name|first }}
+        </div>
+        <div class="" style="flex:1;border-radius:10px;padding:10px 14px;" >
+          <div class="{% if comment.user.role == 'technician' %}comment-bubble-tech{% else %}comment-bubble-user{% endif %}" style="padding:10px 14px;border-radius:10px;">
+          <div style="font-size:12px;font-weight:500;color:#0F172A;margin-bottom:4px">
+            {{ comment.user.get_full_name }}
+            <span style="font-weight:400;color:#94A3B8;font-size:11px;margin-left:6px">
+              {{ comment.user.get_role_display }} · {{ comment.created_at|date:"d M, H:i" }}
+            </span>
+          </div>
+          <div style="font-size:13px;color:#475569;line-height:1.5">{{ comment.comment }}</div>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <p style="color:#94A3B8;font-size:13px;text-align:center;padding:16px 0">No comments yet.</p>
+      {% endfor %}
+
+      <!-- Add comment -->
+      <form method="POST" style="margin-top:12px;padding-top:14px;border-top:1px solid #F1F5F9">
+        {% csrf_token %}
+        {{ comment_form.comment }}
+        <button type="submit" name="add_comment" class="btn btn-primary" style="margin-top:8px">
+          <i class="ti ti-send"></i> Send Comment
+        </button>
+      </form>
+    </div>
+
+    <!-- Activity log -->
+    <div class="card">
+      <div class="card-title"><i class="ti ti-history" style="color:#0F6E56"></i> Activity Log</div>
+      {% for log in logs %}
+      <div style="display:flex;gap:10px;margin-bottom:10px;font-size:12px;color:#64748B">
+        <i class="ti ti-point" style="margin-top:2px;color:#0F6E56"></i>
+        <span>{{ log.note }} &nbsp;·&nbsp; {{ log.changed_at|date:"d M Y, H:i" }}</span>
+        {% if log.old_status and log.new_status %}
+        <span style="margin-left:auto">
+          <span class="badge badge-{{ log.old_status }}" style="font-size:10px">{{ log.old_status }}</span>
+          <i class="ti ti-arrow-right" style="font-size:10px"></i>
+          <span class="badge badge-{{ log.new_status }}" style="font-size:10px">{{ log.new_status }}</span>
+        </span>
+        {% endif %}
+      </div>
+      {% empty %}
+      <p style="color:#94A3B8;font-size:13px">No activity yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-settings" style="color:#0F6E56"></i> Ticket Actions</div>
+
+      {% if request.user.role == 'admin' or request.user.role == 'technician' %}
+      <form method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          {{ assign_form.status }}
+        </div>
+        {% if request.user.role == 'admin' %}
+        <div class="form-group">
+          <label class="form-label">Assign to technician</label>
+          {{ assign_form.assigned_to }}
+        </div>
+        {% endif %}
+        <button type="submit" name="update_ticket" class="btn btn-primary" style="width:100%;justify-content:center">
+          <i class="ti ti-check"></i> Save Changes
+        </button>
+      </form>
+      {% else %}
+      <p style="font-size:13px;color:#64748B">Only admins and technicians can update tickets.</p>
+      {% endif %}
+
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid #F1F5F9">
+        <div style="font-size:12px;color:#64748B;margin-bottom:8px;font-weight:500">Ticket info</div>
+        <div style="font-size:12px;display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;justify-content:space-between"><span style="color:#94A3B8">Category</span><span>{{ ticket.category }}</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:#94A3B8">Department</span><span>{{ ticket.department }}</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:#94A3B8">Submitted by</span><span>{{ ticket.created_by.get_full_name }}</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:#94A3B8">Assigned to</span><span>{{ ticket.assigned_to.get_full_name|default:"Unassigned" }}</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:#94A3B8">Created</span><span>{{ ticket.created_at|date:"d M Y" }}</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:#94A3B8">Updated</span><span>{{ ticket.updated_at|date:"d M Y" }}</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

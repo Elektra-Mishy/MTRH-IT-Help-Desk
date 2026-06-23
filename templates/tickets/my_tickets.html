@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block page_title %}My Tickets{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'ticket_create' %}" class="btn btn-primary"><i class="ti ti-plus"></i> New Ticket</a>
+{% endblock %}
+
+{% block content %}
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#E1F5EE"><i class="ti ti-send" style="color:#0F6E56"></i></div>
+    <div class="stat-label">Submitted</div>
+    <div class="stat-value" style="color:#0F172A">{{ tickets.count }}</div>
+    <div class="stat-bar" style="background:#0F6E56"></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#D1FAE5"><i class="ti ti-check" style="color:#065F46"></i></div>
+    <div class="stat-label">Resolved</div>
+    <div class="stat-value" style="color:#065F46">{{ tickets|length }}</div>
+    <div class="stat-bar" style="background:#10B981"></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#FEF3C7"><i class="ti ti-clock" style="color:#92400E"></i></div>
+    <div class="stat-label">Pending</div>
+    <div class="stat-value" style="color:#92400E">{{ tickets|length }}</div>
+    <div class="stat-bar" style="background:#F59E0B"></div>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Ticket #</th><th>Title</th><th>Priority</th><th>Status</th><th>Technician</th><th>Last updated</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ticket in tickets %}
+      <tr>
+        <td><a href="{% url 'ticket_detail' ticket.pk %}" style="color:#0F6E56;font-weight:500;text-decoration:none">{{ ticket.ticket_number }}</a></td>
+        <td>{{ ticket.title }}</td>
+        <td><span class="badge badge-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span></td>
+        <td><span class="badge badge-{{ ticket.status }}">{{ ticket.get_status_display }}</span></td>
+        <td>{{ ticket.assigned_to.get_full_name|default:"—" }}</td>
+        <td>{{ ticket.updated_at|date:"d M Y, H:i" }}</td>
+        <td><a href="{% url 'ticket_detail' ticket.pk %}" class="btn btn-sm">View</a></td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="7" style="text-align:center;padding:32px;color:#94A3B8">
+          <i class="ti ti-ticket" style="font-size:32px;display:block;margin-bottom:8px"></i>
+          You have not submitted any tickets yet.
+          <br><br>
+          <a href="{% url 'ticket_create' %}" class="btn btn-primary">Create your first ticket</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

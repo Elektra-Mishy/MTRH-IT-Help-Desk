@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% block page_title %}Reports{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'export_pdf' %}" class="btn btn-primary">
+  <i class="ti ti-download"></i> Export PDF
+</a>
+<a href="{% url 'export_csv' %}" class="btn">
+  <i class="ti ti-table-export"></i> Export CSV
+</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- STATUS REPORT -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px">
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#FEF3C7"><i class="ti ti-clock" style="color:#92400E"></i></div>
+    <div class="stat-label">Pending</div>
+    <div class="stat-value" style="color:#92400E">{{ status_report.pending }}</div>
+    <div class="stat-bar" style="background:#F59E0B"></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#DBEAFE"><i class="ti ti-user-check" style="color:#1D4ED8"></i></div>
+    <div class="stat-label">Assigned</div>
+    <div class="stat-value" style="color:#1D4ED8">{{ status_report.assigned }}</div>
+    <div class="stat-bar" style="background:#3B82F6"></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#EDE9FE"><i class="ti ti-loader" style="color:#5B21B6"></i></div>
+    <div class="stat-label">In progress</div>
+    <div class="stat-value" style="color:#5B21B6">{{ status_report.in_progress }}</div>
+    <div class="stat-bar" style="background:#8B5CF6"></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#D1FAE5"><i class="ti ti-check" style="color:#065F46"></i></div>
+    <div class="stat-label">Resolved</div>
+    <div class="stat-value" style="color:#065F46">{{ status_report.resolved }}</div>
+    <div class="stat-bar" style="background:#10B981"></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#F1F5F9"><i class="ti ti-archive" style="color:#475569"></i></div>
+    <div class="stat-label">Closed</div>
+    <div class="stat-value" style="color:#475569">{{ status_report.closed }}</div>
+    <div class="stat-bar" style="background:#94A3B8"></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#E1F5EE"><i class="ti ti-ticket" style="color:#0F6E56"></i></div>
+    <div class="stat-label">Total</div>
+    <div class="stat-value" style="color:#0F6E56">{{ status_report.total }}</div>
+    <div class="stat-bar" style="background:#0F6E56"></div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+
+  <!-- DEPARTMENT REPORT -->
+  <div class="card">
+    <div class="card-title"><i class="ti ti-building-hospital" style="color:#0F6E56"></i> Department report</div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead>
+        <tr>
+          <th style="text-align:left;padding:8px 0;border-bottom:1px solid #F1F5F9;font-size:11px;color:#64748B;text-transform:uppercase">Department</th>
+          <th style="text-align:center;padding:8px 0;border-bottom:1px solid #F1F5F9;font-size:11px;color:#64748B;text-transform:uppercase">Total</th>
+          <th style="text-align:center;padding:8px 0;border-bottom:1px solid #F1F5F9;font-size:11px;color:#64748B;text-transform:uppercase">Resolved</th>
+          <th style="text-align:center;padding:8px 0;border-bottom:1px solid #F1F5F9;font-size:11px;color:#64748B;text-transform:uppercase">Pending</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in dept_report %}
+        {% if item.total > 0 %}
+        <tr>
+          <td style="padding:8px 0;border-bottom:1px solid #F8FAFC;color:#334155">{{ item.name }}</td>
+          <td style="text-align:center;padding:8px 0;border-bottom:1px solid #F8FAFC;font-weight:500">{{ item.total }}</td>
+          <td style="text-align:center;padding:8px 0;border-bottom:1px solid #F8FAFC;color:#065F46">{{ item.resolved }}</td>
+          <td style="text-align:center;padding:8px 0;border-bottom:1px solid #F8FAFC;color:#92400E">{{ item.pending }}</td>
+        </tr>
+        {% endif %}
+        {% empty %}
+        <tr><td colspan="4" style="padding:16px 0;color:#94A3B8;text-align:center">No data yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- TECHNICIAN REPORT -->
+  <div class="card">
+    <div class="card-title"><i class="ti ti-user-check" style="color:#0F6E56"></i> Technician report</div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead>
+        <tr>
+          <th style="text-align:left;padding:8px 0;border-bottom:1px solid #F1F5F9;font-size:11px;color:#64748B;text-transform:uppercase">Technician</th>
+          <th style="text-align:center;padding:8px 0;border-bottom:1px solid #F1F5F9;font-size:11px;color:#64748B;text-transform:uppercase">Assigned</th>
+          <th style="text-align:center;padding:8px 0;border-bottom:1px solid #F1F5F9;font-size:11px;color:#64748B;text-transform:uppercase">In progress</th>
+          <th style="text-align:center;padding:8px 0;border-bottom:1px solid #F1F5F9;font-size:11px;color:#64748B;text-transform:uppercase">Resolved</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tech in tech_report %}
+        <tr>
+          <td style="padding:8px 0;border-bottom:1px solid #F8FAFC">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:28px;height:28px;border-radius:50%;background:#0F6E56;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#fff;flex-shrink:0">
+                {{ tech.name|first }}
+              </div>
+              {{ tech.name }}
+            </div>
+          </td>
+          <td style="text-align:center;padding:8px 0;border-bottom:1px solid #F8FAFC">{{ tech.assigned }}</td>
+          <td style="text-align:center;padding:8px 0;border-bottom:1px solid #F8FAFC;color:#5B21B6">{{ tech.in_progress }}</td>
+          <td style="text-align:center;padding:8px 0;border-bottom:1px solid #F8FAFC;color:#065F46;font-weight:500">{{ tech.resolved }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" style="padding:16px 0;color:#94A3B8;text-align:center">No technicians yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ALL TICKETS TABLE -->
+<div style="font-size:14px;font-weight:500;margin-bottom:12px">All tickets</div>
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Ticket #</th><th>Title</th><th>Department</th>
+        <th>Priority</th><th>Status</th><th>Assigned to</th><th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ticket in status_report %}
+      {% empty %}
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

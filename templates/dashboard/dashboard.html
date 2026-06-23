@@ -1,0 +1,278 @@
+{% extends 'base.html' %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+
+{% if role == 'admin' %}
+
+<div style="background:linear-gradient(135deg,#0A5C47 0%,#0F6E56 60%,#1D9E75 100%);border-radius:14px;padding:22px 26px;margin-bottom:22px;display:flex;align-items:center;justify-content:space-between;overflow:hidden;position:relative">
+  <div style="position:absolute;top:-40px;right:-40px;width:180px;height:180px;background:rgba(255,255,255,0.05);border-radius:50%"></div>
+  <div style="position:absolute;bottom:-50px;right:80px;width:120px;height:120px;background:rgba(255,255,255,0.04);border-radius:50%"></div>
+  <div style="position:relative;z-index:1">
+    <div style="font-size:17px;font-weight:600;color:#fff;margin-bottom:5px">Good day, {{ request.user.get_full_name }}!</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.7)">Here is what is happening with MTRH IT support today.</div>
+  </div>
+  <div style="display:flex;gap:8px;position:relative;z-index:1">
+    <a href="{% url 'ticket_create' %}" class="btn" style="background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.25);color:#fff;font-size:13px">
+      <i class="ti ti-plus"></i> New Ticket
+    </a>
+    <a href="{% url 'reports' %}" class="btn" style="background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.25);color:#fff;font-size:13px">
+      <i class="ti ti-chart-bar"></i> Reports
+    </a>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#E1F5EE"><i class="ti ti-ticket" style="color:#0F6E56"></i></div>
+    <div class="stat-label">Total tickets</div>
+    <div class="stat-value" style="color:#0F172A">{{ total_tickets }}</div>
+    <div class="stat-bar" style="background:#0F6E56"></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#DBEAFE"><i class="ti ti-clock" style="color:#1D4ED8"></i></div>
+    <div class="stat-label">Open tickets</div>
+    <div class="stat-value" style="color:#1D4ED8">{{ open_tickets }}</div>
+    <div class="stat-bar" style="background:#3B82F6"></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#D1FAE5"><i class="ti ti-check" style="color:#065F46"></i></div>
+    <div class="stat-label">Resolved</div>
+    <div class="stat-value" style="color:#065F46">{{ resolved_tickets }}</div>
+    <div class="stat-bar" style="background:#10B981"></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#FEE2E2"><i class="ti ti-alert-triangle" style="color:#991B1B"></i></div>
+    <div class="stat-label">Critical</div>
+    <div class="stat-value" style="color:#991B1B">{{ critical_tickets }}</div>
+    <div class="stat-bar" style="background:#EF4444"></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#EDE9FE"><i class="ti ti-users" style="color:#5B21B6"></i></div>
+    <div class="stat-label">Total users</div>
+    <div class="stat-value" style="color:#5B21B6">{{ total_users }}</div>
+    <div class="stat-bar" style="background:#8B5CF6"></div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:22px">
+  <div class="card">
+    <div class="card-title"><i class="ti ti-building-hospital" style="color:#0F6E56"></i> Tickets by department</div>
+    <canvas id="deptChart"></canvas>
+  </div>
+  <div class="card">
+    <div class="card-title"><i class="ti ti-chart-pie" style="color:#0F6E56"></i> Tickets by status</div>
+    <canvas id="statusChart"></canvas>
+  </div>
+</div>
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+  <div style="font-size:14px;font-weight:600;color:#0F172A">Recent tickets</div>
+  <a href="{% url 'ticket_list' %}" class="btn btn-sm">View all <i class="ti ti-arrow-right"></i></a>
+</div>
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Ticket #</th><th>Title</th><th>Department</th>
+        <th>Priority</th><th>Status</th><th>Technician</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ticket in recent_tickets %}
+      <tr onclick="window.location='{% url 'ticket_detail' ticket.pk %}'" style="cursor:pointer">
+        <td style="color:#0F6E56;font-weight:600">{{ ticket.ticket_number }}</td>
+        <td>{{ ticket.title }}</td>
+        <td>{{ ticket.department }}</td>
+        <td><span class="badge badge-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span></td>
+        <td><span class="badge badge-{{ ticket.status }}">{{ ticket.get_status_display }}</span></td>
+        <td>{{ ticket.assigned_to.get_full_name|default:"—" }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="6" style="text-align:center;padding:32px;color:#94A3B8">
+          <i class="ti ti-ticket" style="font-size:32px;display:block;margin-bottom:8px"></i>
+          No tickets yet. <a href="{% url 'ticket_create' %}" style="color:#0F6E56">Create the first one.</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const deptLabels = {{ dept_labels|safe }};
+const deptCounts = {{ dept_counts|safe }};
+const statusData = {{ status_data|safe }};
+
+const deptCtx = document.getElementById('deptChart').getContext('2d');
+new Chart(deptCtx, {
+  type: 'bar',
+  data: {
+    labels: deptLabels,
+    datasets: [{
+      label: 'Tickets',
+      data: deptCounts,
+      backgroundColor: '#0F6E56',
+      borderRadius: 6,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#F1F5F9' } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+const statusCtx = document.getElementById('statusChart').getContext('2d');
+new Chart(statusCtx, {
+  type: 'doughnut',
+  data: {
+    labels: ['Pending', 'Assigned', 'In Progress', 'Resolved', 'Closed'],
+    datasets: [{
+      data: statusData,
+      backgroundColor: ['#F59E0B','#3B82F6','#8B5CF6','#10B981','#94A3B8'],
+      borderWidth: 0,
+      hoverOffset: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: { padding: 14, font: { size: 12 }, usePointStyle: true }
+      }
+    },
+    cutout: '68%'
+  }
+});
+</script>
+
+{% elif role == 'technician' %}
+
+<div style="background:linear-gradient(135deg,#0A5C47 0%,#0F6E56 100%);border-radius:14px;padding:22px 26px;margin-bottom:22px">
+  <div style="font-size:17px;font-weight:600;color:#fff;margin-bottom:5px">Welcome, {{ request.user.get_full_name }}!</div>
+  <div style="font-size:13px;color:rgba(255,255,255,0.7)">Here are your assigned support tickets.</div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#E1F5EE"><i class="ti ti-ticket" style="color:#0F6E56"></i></div>
+    <div class="stat-label">Assigned tickets</div>
+    <div class="stat-value" style="color:#0F172A">{{ assigned_count }}</div>
+    <div class="stat-bar" style="background:#0F6E56"></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#DBEAFE"><i class="ti ti-clock" style="color:#1D4ED8"></i></div>
+    <div class="stat-label">Pending</div>
+    <div class="stat-value" style="color:#1D4ED8">{{ pending_count }}</div>
+    <div class="stat-bar" style="background:#3B82F6"></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#EDE9FE"><i class="ti ti-loader" style="color:#5B21B6"></i></div>
+    <div class="stat-label">In progress</div>
+    <div class="stat-value" style="color:#5B21B6">{{ in_progress_count }}</div>
+    <div class="stat-bar" style="background:#8B5CF6"></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#D1FAE5"><i class="ti ti-check" style="color:#065F46"></i></div>
+    <div class="stat-label">Resolved</div>
+    <div class="stat-value" style="color:#065F46">{{ resolved_count }}</div>
+    <div class="stat-bar" style="background:#10B981"></div>
+  </div>
+</div>
+
+<div style="font-size:14px;font-weight:600;color:#0F172A;margin-bottom:12px">My assigned tickets</div>
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr><th>Ticket #</th><th>Title</th><th>Department</th><th>Priority</th><th>Status</th><th>Date</th></tr>
+    </thead>
+    <tbody>
+      {% for ticket in recent_tickets %}
+      <tr onclick="window.location='{% url 'ticket_detail' ticket.pk %}'" style="cursor:pointer">
+        <td style="color:#0F6E56;font-weight:600">{{ ticket.ticket_number }}</td>
+        <td>{{ ticket.title }}</td>
+        <td>{{ ticket.department }}</td>
+        <td><span class="badge badge-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span></td>
+        <td><span class="badge badge-{{ ticket.status }}">{{ ticket.get_status_display }}</span></td>
+        <td>{{ ticket.created_at|date:"d M Y" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" style="text-align:center;padding:24px;color:#94A3B8">No tickets assigned yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% else %}
+
+<div style="background:linear-gradient(135deg,#0A5C47 0%,#0F6E56 100%);border-radius:14px;padding:22px 26px;margin-bottom:22px;display:flex;align-items:center;justify-content:space-between">
+  <div>
+    <div style="font-size:17px;font-weight:600;color:#fff;margin-bottom:5px">Hello, {{ request.user.get_full_name }}!</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.7)">Track your IT support tickets here.</div>
+  </div>
+  <a href="{% url 'ticket_create' %}" class="btn" style="background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.25);color:#fff">
+    <i class="ti ti-plus"></i> New Ticket
+  </a>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#E1F5EE"><i class="ti ti-send" style="color:#0F6E56"></i></div>
+    <div class="stat-label">Submitted</div>
+    <div class="stat-value" style="color:#0F172A">{{ submitted }}</div>
+    <div class="stat-bar" style="background:#0F6E56"></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#D1FAE5"><i class="ti ti-check" style="color:#065F46"></i></div>
+    <div class="stat-label">Resolved</div>
+    <div class="stat-value" style="color:#065F46">{{ resolved }}</div>
+    <div class="stat-bar" style="background:#10B981"></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#FEF3C7"><i class="ti ti-clock" style="color:#92400E"></i></div>
+    <div class="stat-label">Pending</div>
+    <div class="stat-value" style="color:#92400E">{{ pending }}</div>
+    <div class="stat-bar" style="background:#F59E0B"></div>
+  </div>
+</div>
+
+<div style="font-size:14px;font-weight:600;color:#0F172A;margin-bottom:12px">My recent tickets</div>
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr><th>Ticket #</th><th>Title</th><th>Priority</th><th>Status</th><th>Technician</th><th>Date</th></tr>
+    </thead>
+    <tbody>
+      {% for ticket in recent_tickets %}
+      <tr onclick="window.location='{% url "ticket_detail" ticket.pk %}'" style="cursor:pointer">
+        <td style="color:#0F6E56;font-weight:600">{{ ticket.ticket_number }}</td>
+        <td>{{ ticket.title }}</td>
+        <td><span class="badge badge-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span></td>
+        <td><span class="badge badge-{{ ticket.status }}">{{ ticket.get_status_display }}</span></td>
+        <td>{{ ticket.assigned_to.get_full_name|default:"—" }}</td>
+        <td>{{ ticket.created_at|date:"d M Y" }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="6" style="text-align:center;padding:32px;color:#94A3B8">
+          <i class="ti ti-ticket" style="font-size:32px;display:block;margin-bottom:8px"></i>
+          No tickets yet.
+          <br><br>
+          <a href="{% url 'ticket_create' %}" class="btn btn-primary">Create your first ticket</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endif %}
+{% endblock %}

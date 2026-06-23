@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block page_title %}Create Ticket{% endblock %}
+
+{% block content %}
+<div style="max-width:680px">
+
+  <div style="background:#0F6E56;border-radius:12px 12px 0 0;padding:18px 24px;display:flex;align-items:center;gap:14px">
+    <div style="width:40px;height:40px;background:rgba(255,255,255,0.2);border-radius:10px;display:flex;align-items:center;justify-content:center">
+      <i class="ti ti-ticket" style="color:#fff;font-size:20px"></i>
+    </div>
+    <div>
+      <div style="font-size:15px;font-weight:500;color:#fff">Submit a new support ticket</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.65)">Your ticket will be assigned to a technician shortly</div>
+    </div>
+  </div>
+
+  <div class="card" style="border-radius:0 0 12px 12px;border-top:none">
+
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label class="form-label">Issue title *</label>
+        <input type="text" name="title" class="form-control"
+               placeholder="e.g. HP Printer Not Printing in Lab" required>
+      </div>
+
+      <div class="form-row">
+
+        <div class="form-group">
+          <label class="form-label">Category *</label>
+          <select name="category" class="form-control" required>
+            <option value="">-- Select category --</option>
+            {% for cat in categories %}
+              <option value="{{ cat.pk }}">{{ cat.category_name }}</option>
+            {% empty %}
+              <option disabled>No categories found</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Department *</label>
+          <select name="department" class="form-control" required>
+            <option value="">-- Select department --</option>
+            {% for dept in departments %}
+              <option value="{{ dept.pk }}">{{ dept.department_name }}</option>
+            {% empty %}
+              <option disabled>No departments found</option>
+            {% endfor %}
+          </select>
+        </div>
+
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Priority *</label>
+        <select name="priority" class="form-control" required>
+          <option value="">-- Select priority --</option>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+          <option value="critical">Critical</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Description *</label>
+        <textarea name="description" class="form-control" rows="4"
+                  placeholder="Describe the issue in detail — what happened, when, and how many users are affected..." required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Attachment (optional screenshot)</label>
+        <div style="border:2px dashed #CBD5E1;border-radius:8px;padding:16px;text-align:center;background:#F8FAFC">
+          <i class="ti ti-upload" style="font-size:24px;color:#94A3B8;display:block;margin-bottom:6px"></i>
+          <div style="font-size:12px;color:#64748B;margin-bottom:8px">Click to upload screenshot</div>
+          <input type="file" name="attachment" accept="image/*,.pdf">
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button type="submit" class="btn btn-primary">
+          <i class="ti ti-send"></i> Submit Ticket
+        </button>
+        <a href="{% url 'ticket_list' %}" class="btn">Cancel</a>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- DEBUG: show counts -->
+<p style="color:red;margin-top:10px">
+  Categories count: {{ categories|length }} |
+  Departments count: {{ departments|length }}
+</p>
+
+{% endblock %}

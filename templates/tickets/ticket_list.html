@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block page_title %}All Tickets{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'ticket_create' %}" class="btn btn-primary">
+  <i class="ti ti-plus"></i> New Ticket
+</a>
+{% endblock %}
+
+{% block content %}
+
+<div class="card" style="margin-bottom:16px;padding:14px 16px">
+  <form method="GET" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+    <div style="flex:1;min-width:180px">
+      <label class="form-label">Search</label>
+      <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Ticket number, title, department...">
+    </div>
+    <div>
+      <label class="form-label">Status</label>
+      <select name="status" class="form-control">
+        <option value="">All statuses</option>
+        <option value="pending" {% if status == 'pending' %}selected{% endif %}>Pending</option>
+        <option value="assigned" {% if status == 'assigned' %}selected{% endif %}>Assigned</option>
+        <option value="in_progress" {% if status == 'in_progress' %}selected{% endif %}>In Progress</option>
+        <option value="resolved" {% if status == 'resolved' %}selected{% endif %}>Resolved</option>
+        <option value="closed" {% if status == 'closed' %}selected{% endif %}>Closed</option>
+      </select>
+    </div>
+    <div>
+      <label class="form-label">Priority</label>
+      <select name="priority" class="form-control">
+        <option value="">All priorities</option>
+        <option value="low" {% if priority == 'low' %}selected{% endif %}>Low</option>
+        <option value="medium" {% if priority == 'medium' %}selected{% endif %}>Medium</option>
+        <option value="high" {% if priority == 'high' %}selected{% endif %}>High</option>
+        <option value="critical" {% if priority == 'critical' %}selected{% endif %}>Critical</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button type="submit" class="btn btn-primary">Filter</button>
+      <a href="{% url 'ticket_list' %}" class="btn">Clear</a>
+    </div>
+  </form>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Ticket #</th>
+        <th>Title</th>
+        <th>Category</th>
+        <th>Department</th>
+        <th>Priority</th>
+        <th>Status</th>
+        <th>Technician</th>
+        <th>Date</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ticket in tickets %}
+      <tr>
+        <td><a href="{% url 'ticket_detail' ticket.pk %}" style="color:#0F6E56;font-weight:500;text-decoration:none">{{ ticket.ticket_number }}</a></td>
+        <td>{{ ticket.title }}</td>
+        <td>{{ ticket.category }}</td>
+        <td>{{ ticket.department }}</td>
+        <td><span class="badge badge-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span></td>
+        <td><span class="badge badge-{{ ticket.status }}">{{ ticket.get_status_display }}</span></td>
+        <td>{{ ticket.assigned_to.get_full_name|default:"—" }}</td>
+        <td>{{ ticket.created_at|date:"d M Y" }}</td>
+        <td>
+          <a href="{% url 'ticket_detail' ticket.pk %}" class="btn btn-sm">View</a>
+          {% if request.user.role == 'admin' %}
+          <a href="{% url 'ticket_delete' ticket.pk %}" class="btn btn-sm btn-danger" onclick="return confirm('Delete this ticket?')">Delete</a>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="9" style="text-align:center;padding:32px;color:#94A3B8">
+          <i class="ti ti-ticket" style="font-size:32px;display:block;margin-bottom:8px"></i>
+          No tickets found.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
