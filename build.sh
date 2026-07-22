@@ -7,6 +7,13 @@ python manage.py migrate
 python manage.py seed_data
 
 python manage.py shell << 'EOF'
+from django.contrib.sites.models import Site
+site = Site.objects.get_or_create(id=1)[0]
+site.domain = 'mtrh-helpdesk.onrender.com'
+site.name = 'MTRH IT Help Desk'
+site.save()
+print('Site domain set to mtrh-helpdesk.onrender.com')
+
 from accounts.models import User
 if not User.objects.filter(username='Admin').exists():
     u = User.objects.create_superuser(
@@ -18,7 +25,7 @@ if not User.objects.filter(username='Admin').exists():
     )
     u.role = 'admin'
     u.save()
-    print('Admin created')
+    print('Admin user created')
 else:
     u = User.objects.get(username='Admin')
     u.role = 'admin'
