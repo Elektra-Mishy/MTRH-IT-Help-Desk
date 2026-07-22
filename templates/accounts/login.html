@@ -212,6 +212,18 @@
     gap: 8px;
   }
 
+  .forgot-link {
+    display: block;
+    text-align: center;
+    margin-top: 14px;
+    font-size: 12px;
+    color: #64748B;
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .forgot-link:hover { color: #0F6E56; }
+
   .login-footer {
     margin-top: 24px;
     text-align: center;
@@ -289,6 +301,10 @@
         <i class="ti ti-login"></i> Sign in
       </button>
     </form>
+
+    <a href="{% url 'password_reset' %}" class="forgot-link">
+      <i class="ti ti-key"></i> Forgot your password?
+    </a>
 
     <div class="login-footer">
       MTRH ICT Department &copy; 2026 &nbsp;·&nbsp; All rights reserved

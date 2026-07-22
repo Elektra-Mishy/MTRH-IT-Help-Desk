@@ -1,0 +1,26 @@
+databases:
+  - name: mtrh_helpdesk_db
+    databaseName: mtrh_helpdesk
+    user: mtrh_user
+    plan: free
+
+services:
+  - type: web
+    name: mtrh-helpdesk
+    runtime: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn mtrh_helpdesk.wsgi:application"
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mtrh_helpdesk_db
+          property: connectionString
+      - key: SECRET_KEY
+        value: ^316zu#h#+!jho*3l2+ly&uieh#t!_du*(@x6!3p5szb97&rwa
+      - key: DEBUG
+        value: False
+      - key: EMAIL_HOST_USER
+        value: jebetmichelle7@gmail.com
+      - key: EMAIL_HOST_PASSWORD
+        value: uyhtfhaqcowxlmeq
