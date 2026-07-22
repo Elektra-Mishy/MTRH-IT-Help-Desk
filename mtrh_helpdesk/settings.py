@@ -117,3 +117,10 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'uyhtfhaqcowxlmeq')
 DEFAULT_FROM_EMAIL = 'MTRH IT Help Desk <jebetmichelle7@gmail.com>'
 
 PASSWORD_RESET_TIMEOUT = 86400
+
+# Password reset domain
+PASSWORD_RESET_TIMEOUT = 86400
+CSRF_TRUSTED_ORIGINS = [
+    'https://mtrh-helpdesk.onrender.com',
+    'http://127.0.0.1:8000',
+]
